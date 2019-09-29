@@ -1,0 +1,3 @@
+[submodule "btcrelay-sol"]
+	path = btcrelay-sol
+	url = https://github.com/crossclaim/btcrelay-sol
