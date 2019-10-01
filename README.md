@@ -1,5 +1,21 @@
 # devcon-cross-chain-workshop
 
+## Relay-Tower Defence: 
+
+Users get a broken chain relay contract (missing require statements, etc.)
+
+20min time to set up, connect to our testnet, register teamID and contract address. 
+
+Then, every 5 minutes (or so) we start a "new attack wave", i.e., launch one of the testcases against all registered contracts. If the contract returns the correct value, the team earns a point. Past test cases a repeated with each new wave and points are earned for each passed testcase. 
+
+Example:
+
+* Minute 5: Testcase 1
+* Minute 10: Testcase 1 + 2
+* Minute 15: Testcase 1 + 2 + 3 
+* ...
+
+
 
 ## Test cases:
 
