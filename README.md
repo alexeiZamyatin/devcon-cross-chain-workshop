@@ -16,7 +16,6 @@ Example:
 * ...
 
 
-
 ## Test cases:
 
 ### setInitialParant
@@ -35,3 +34,12 @@ Example:
 
 ### forkHandling
 * 
+
+
+## User interface:
+
+### Registration
+Teams define their "name" and register for participation. 
+
+### Dashboard
+Show leaderboard of all participants
