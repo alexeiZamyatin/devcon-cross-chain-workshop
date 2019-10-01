@@ -27,7 +27,8 @@ The faster a team solves all test-cases, the more points they will collect.
 * invalid merkle tree proof size (check that > 32 and power of 2)
 
 ### forkHandling
-* 
+* Detect a fork store correctly
+* Fix "main chain early delete": our contract instantly deletes the main chain, as soon as a fork overtakes it. However, a testcase handles the scenario where the relay is our of sync and the main chain is in fact much longer - and main chain blocks get submitted after the fork. Participants must only remove the delete statement to fix this.
 
 
 ## User interface:
