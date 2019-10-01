@@ -25,6 +25,7 @@ The faster a team solves all test-cases, the more points they will collect.
 * invalid txID (check size and non-zero)
 * confirmation check missing
 * invalid merkle tree proof size (check that > 32 and power of 2)
+* Extract merkle tree root and store in contract (correct splice + write to pre-define mapping)
 
 ### forkHandling
 * Detect a fork store correctly
