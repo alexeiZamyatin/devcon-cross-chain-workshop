@@ -41,3 +41,12 @@ Show leaderboard of all participants (team name, current contract address, point
 |Rank| team | current address | Test 1 | Test 2 | Test 3| Test 4| ... | Total Points|
 |----|------|----------------|---------|---------|-------|-------|----|-----------|
 |1 |A-Team| 123jansnkns...| 10| 5 | 3| 20| ... | 38 |
+
+## Game Server
+
+### Attack script
+For each team-contract pair, send transactions and check against expected results. In pre-defined intervals. 
+Stores points to database. 
+
+### Submit/Re-deploy Script
+Re-deploys a team's contract and sends the new address to our server. Server updates database entry
