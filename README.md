@@ -36,4 +36,8 @@ The faster a team solves all test-cases, the more points they will collect.
 Teams define their "name" and register for participation. 
 
 ### Dashboard
-Show leaderboard of all participants
+Show leaderboard of all participants (team name, current contract address, points per challenge):
+
+|Rank| team | current address | Test 1 | Test 2 | Test 3| Test 4| ... | Total Points|
+|----|------|----------------|---------|---------|-------|-------|----|-----------|
+|1 |A-Team| 123jansnkns...| 10| 5 | 3| 20| ... | 38 |
