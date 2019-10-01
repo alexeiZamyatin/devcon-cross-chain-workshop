@@ -10,6 +10,8 @@ If the contract returns the correct value, the team earns a point.
 
 The faster a team solves all test-cases, the more points they will collect. 
 
+Note: add a "clearData()" function that deletes all stored data from contract (so we do not need to handle duplicate submissions for contracts that are not redeployed)
+
 ## Test cases:
 
 ### setInitialParant
