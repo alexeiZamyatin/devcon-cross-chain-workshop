@@ -3,10 +3,11 @@
         "chainId": 1010,
         "homesteadBlock": 0,
         "eip155Block": 0,
-        "eip158Block": 0
+        "eip158Block": 0,
+        "ByzantiumBlock": 0
     },
     "difficulty": "200",
-    "gasLimit": "2100000",
+    "gasLimit": "8000000",
     "alloc": {
         "11633b8ea5ff33239a43f152f34264f0acb0e051": { "balance": "1000000" },
     }
