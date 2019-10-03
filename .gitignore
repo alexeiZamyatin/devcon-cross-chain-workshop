@@ -7,6 +7,8 @@ datadir
 ## Pytest
 */__pycache__
 *.pytest_cache
+*/venv
+
 ### Node ###
 # Logs
 logs
