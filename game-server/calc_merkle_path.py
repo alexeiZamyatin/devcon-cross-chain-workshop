@@ -4,11 +4,11 @@ import binascii
 def dblShaFlip(header):
     first_hash = hashlib.sha256(binascii.unhexlify(header)).hexdigest()
     second_hash = hashlib.sha256(binascii.unhexlify(first_hash)).hexdigest()
-    return flip32Bytes(second_hash)
+    return flipBytes(second_hash)
 
-def flip32Bytes(b32):
+def flipBytes(b):
     byteSize = 2
-    chunks = [ b32[i:i+byteSize] for i in range(0, len(b32), byteSize) ]
+    chunks = [ b[i:i+byteSize] for i in range(0, len(b), byteSize) ]
     reversed_chunks = chunks[::-1]
     return ('').join(reversed_chunks)
 
@@ -25,4 +25,5 @@ def extractPathFromMerkleBlock(merkleBlock):
     for i in range(1,nHashes+1):
         path =+ tmpData[i*64:]
     return path
+
 

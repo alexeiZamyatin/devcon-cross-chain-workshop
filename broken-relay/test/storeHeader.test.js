@@ -5,82 +5,67 @@ const constants = require("./constants")
 const helpers = require('./helpers');
 const truffleAssert = require('truffle-assertions');
 
+const testdata = require('./testdata/blocks.json')
+
+
 var dblSha256Flip = helpers.dblSha256Flip
 var flipBytes = helpers.flipBytes
 
 contract('BrokenRelay storeHeader', async(accounts) => {
 
     const storeGenesis = async function(){
+        genesis = testdata[0]
         await relay.setInitialParent(
-            constants.GENESIS.HEADER,
-            constants.GENESIS.BLOCKHEIGHT,
-            constants.GENESIS.CHAINWORK,
+            genesis["header"],
+            genesis["height"],
+            web3.utils.hexToNumber(genesis["chainwork"])
             );
     }
+
     beforeEach('(re)deploy contracts', async function (){ 
         relay = await BrokenRelay.new();
         utils = await Utils.deployed();
     });
-    
+
+
     it("set Genesis as initial parent ", async () => {   
+        genesis = testdata[0]
         let submitHeaderTx = await relay.setInitialParent(
-            constants.GENESIS.HEADER,
-            constants.GENESIS.BLOCKHEIGHT,
-            constants.GENESIS.CHAINWORK,
+            genesis["header"],
+            genesis["height"],
+            web3.utils.hexToNumber(genesis["chainwork"]),
             );
         // check if event was emmitted correctly
         truffleAssert.eventEmitted(submitHeaderTx, 'StoreHeader', (ev) => {
-            return ev.blockHeight == 0;
+            return ev.blockHeight == genesis["height"];
         })
 
         //check header was stored correctly
-        //TODO: check how to verify target - too large for toNumber() function 
         storedHeader = await relay.getBlockHeader(
-            dblSha256Flip(constants.GENESIS.HEADER)
+            genesis["hash"]
         )
-        assert.equal(storedHeader.blockHeight.toNumber(), constants.GENESIS.BLOCKHEIGHT)
-        assert.equal(storedHeader.chainWork.toNumber(), constants.GENESIS.CHAINWORK)
-        assert.equal(flipBytes(storedHeader.merkleRoot), constants.GENESIS.HEADER_INFO.MERKLE_ROOT)
+        assert.equal(storedHeader.blockHeight.toNumber(), genesis["height"])
+        assert.equal(storedHeader.chainWork.toNumber(), genesis["chainwork"])
+        assert.equal(flipBytes(storedHeader.merkleRoot),  genesis["merkleroot"])
     
         console.log("Gas used: " + submitHeaderTx.receipt.gasUsed)
-    });
-    
-    it("set duplicate initial parent - should fail", async () => {   
-        storeGenesis();
-
-        await truffleAssert.reverts(
-            relay.setInitialParent(
-                constants.GENESIS.HEADER,
-                constants.GENESIS.BLOCKHEIGHT,
-                constants.GENESIS.CHAINWORK,
-                ),
-                constants.ERROR_CODES.ERR_GENESIS_SET
-            );
     });
 
     it("submit 1 block after initial Genesis parent ", async () => {   
         
         storeGenesis();
+        block = testdata[1]
         let submitBlock1 = await relay.submitBlockHeader(
-            constants.HEADERS.BLOCK_1
+            block["header"]
         );
         truffleAssert.eventEmitted(submitBlock1, 'StoreHeader', (ev) => {
-            return ev.blockHeight == 1;
+            return ev.blockHeight == block["height"];
         });
 
         console.log("Total gas used: " + submitBlock1.receipt.gasUsed);
    });
 
-   it("submit genesis, skips block 1, submits block 2 - should fail", async () => {   
-        
-    storeGenesis();       
-    await truffleAssert.reverts(
-        relay.submitBlockHeader(
-            constants.HEADERS.BLOCK_2
-            ),
-            constants.ERROR_CODES.ERR_PREV_BLOCK
-        );
-    });
+   
 
     it("submit block 1 with invalid pow - should fail", async () => {   
         

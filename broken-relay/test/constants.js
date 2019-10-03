@@ -30,7 +30,7 @@ exports.BLOCKHASHES = {
 exports.ERROR_CODES = {
      ERR_GENESIS_SET : "Initial parent has already been set",
      ERR_INVALID_FORK_ID : "Incorrect fork identifier: id 0 is no available",
-     ERR_INVALID_HEADER_SIZE : "Invalid block header size",
+     ERR_INVALID_HEADER : "Invalid block header",
      ERR_DUPLICATE_BLOCK : "Block already stored",
      ERR_PREV_BLOCK : "Previous block hash not found", 
      ERR_LOW_DIFF : "PoW hash does not meet difficulty target of header",
@@ -40,5 +40,7 @@ exports.ERROR_CODES = {
      ERR_NOT_FORK : "Indicated fork submission, but block is in main chain",
      ERR_INVALID_TXID : "Invalid transaction identifier",
      ERR_CONFIRMS : "Transaction has less confirmations than requested", 
-     ERR_MERKLE_PROOF : "Invalid Merkle Proof structure"
+     ERR_MERKLE_PROOF : "Invalid Merkle Proof structure",
+     ERR_BLOCK_NOT_FOUND: "Requested block not found in storage"
+
 }

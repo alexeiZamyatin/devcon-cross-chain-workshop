@@ -53,7 +53,7 @@ contract BrokenRelay {
     // EXCEPTION MESSAGES
     string ERR_GENESIS_SET = "Initial parent has already been set";
     string ERR_INVALID_FORK_ID = "Incorrect fork identifier: id 0 is no available";
-    string ERR_INVALID_HEADER_SIZE = "Invalid block header size";
+    string ERR_INVALID_HEADER = "Invalid block header";
     string ERR_DUPLICATE_BLOCK = "Block already stored";
     string ERR_PREV_BLOCK = "Previous block hash not found";
     string ERR_LOW_DIFF = "PoW hash does not meet difficulty target of header";
@@ -64,6 +64,7 @@ contract BrokenRelay {
     string ERR_INVALID_TXID = "Invalid transaction identifier";
     string ERR_CONFIRMS = "Transaction has less confirmations than requested";
     string ERR_MERKLE_PROOF = "Invalid Merkle Proof structure";
+    string ERR_BLOCK_NOT_FOUND = "Requested block not found in storage";
 
 
      /*
@@ -87,7 +88,6 @@ contract BrokenRelay {
         _headers[blockHeaderHash].merkleRoot = getMerkleRootFromHeader(blockHeaderBytes);
         _headers[blockHeaderHash].blockHeight = blockHeight;
         _headers[blockHeaderHash].chainWork = chainWork;
-
         emit StoreHeader(blockHeaderHash, blockHeight);
     }
 
@@ -100,7 +100,7 @@ contract BrokenRelay {
     function submitBlockHeader(bytes memory blockHeaderBytes) public returns (bytes32) {
         
         // TESTCASE: check that submitted block header has correct size
-        require(blockHeaderBytes.length == 80, ERR_INVALID_HEADER_SIZE);
+        require(blockHeaderBytes.length == 80, ERR_INVALID_HEADER);
 
         // Extract prev and cacl. current block header hashes
         bytes32 hashPrevBlock = getPrevBlockHashFromHeader(blockHeaderBytes);
@@ -280,6 +280,7 @@ contract BrokenRelay {
         uint256 chainWork,
         bytes32 merkleRoot
     ){
+        require(_headers[blockHeaderHash].merkleRoot != bytes32(0x0), ERR_BLOCK_NOT_FOUND);
         blockHeight = _headers[blockHeaderHash].blockHeight;
         chainWork = _headers[blockHeaderHash].chainWork;
         merkleRoot = _headers[blockHeaderHash].merkleRoot;
