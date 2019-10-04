@@ -1,11 +1,15 @@
-from tornado.web import Application, RequestHandler
-from tornado.ioloop import IOLoop
+import json
+import subprocess
+from subprocess import CalledProcessError
+
 from tornado.httpserver import HTTPServer
+from tornado.web import HTTPError
+from tornado.ioloop import IOLoop
+from tornado.web import Application, RequestHandler
+
+from db.model import Teams, metadata
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from db.model import metadata, Teams
-import json
-
 
 # setup database
 engine = create_engine('sqlite:///:memory:', echo=True)   
@@ -43,6 +47,14 @@ class RegisterTeam(RequestHandler):
 
         self.write(response)
 
+class Score(RequestHandler):
+    def get(self):
+        id = self.get_argument('id', None)
+        team = db.query(Teams).filter_by(id=id).first()
+        if not team: raise HTTPError(404)
+        self.write({'id': team.id, 'score': team.score})
+
+
 class SubmitContract(RequestHandler):
     def post(self):
         # get the contract address
@@ -52,22 +64,25 @@ class SubmitContract(RequestHandler):
 
         response = {}
 
-        if team:
-            team.contract = submission["contract"]
-            db.commit()
-
-            response['message'] = "Stored contract {} for team {}".format(team.contract, team.name)
+        if team and submission['contract']:
+            response['message'] = "Submitted contract for team {}".format(team.name)
+        elif team:
+            response['message'] = "Please submit a contract"
         else:
             response['message'] = "Team ID not found"
 
         self.write(response)
+
+def execute_test(test):
+    output = subprocess.run(["truffle", "test"], stdout=subprocess.PIPE, check=True)
 
 
 def make_app():
   urls = [
       ("/", Leaderboard),
       ("/api/team", RegisterTeam),
-      ("/api/contract", SubmitContract)
+      ("/api/contract", SubmitContract),
+      ("/api/score", Score)
       ]
   return Application(urls, debug=True)
 
