@@ -4,14 +4,16 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Utils.sol";
 
 /// @title Broken BTC Relay contract. FIX ME!!!
+/// @notice For simplicity, this example assumes:
+/// (i) constant difficulty
+/// (ii) no forks occur
 contract BrokenRelay {
     using SafeMath for uint256;
     using Utils for bytes;
-
+    using Utils for bytes32;
 
     struct Header {
         uint256 blockHeight; // height of this block header
-        uint256 chainWork; // accumulated PoW at this height
         bytes32 merkleRoot; // transaction Merkle tree root
     }
 
@@ -21,18 +23,16 @@ contract BrokenRelay {
     // mapping of block heights to block hashes of the MAIN CHAIN
     mapping(uint256 => bytes32) public _mainChain;
 
-    // block with the highest chainWork, i.e., blockchain tip
+    // block with the most accumulated work, i.e., blockchain tip
     bytes32 public _heaviestBlock;
-
-    // highest chainWork, i.e., accumulated PoW at current blockchain tip
-    uint256 public _highScore;
-
+    uint256 public _heaviestHeight;
 
     // CONSTANTS
     /*
     * Bitcoin difficulty constants
     */
     uint256 public constant DIFFICULTY_ADJUSTMENT_INVETVAL = 2016;
+    uint256 public constant DIFF_TARGET = 0xffff0000000000000000000000000000000000000000000000000000;
     uint256 public constant TARGET_TIMESPAN = 14 * 24 * 60 * 60; // 2 weeks
     uint256 public constant UNROUNDED_MAX_TARGET = 2**224 - 1;
     uint256 public constant TARGET_TIMESPAN_DIV_4 = TARGET_TIMESPAN / 4; // store division as constant to save costs
@@ -65,18 +65,18 @@ contract BrokenRelay {
     string ERR_CONFIRMS = "Transaction has less confirmations than requested";
     string ERR_MERKLE_PROOF = "Invalid Merkle Proof structure";
     string ERR_BLOCK_NOT_FOUND = "Requested block not found in storage";
+    string ERR_VERIFY_TX = "Incorrect Merkle Proof!";
 
 
-     /*
-    * @notice Initializes BTCRelay with the provided block, i.e., defines the first block of the stored chain
+    /**
+    * @notice Initializes the relay with the provided block, i.e., defines the first block of the stored chain
     * @param blockHeaderBytes - 80 bytes raw Bitcoin block headers
     * @param blockHeight - blockHeight of genesis block
-    * @param chainWork  - total accumulated PoW at given blockheight
     */
     function setInitialParent(
         bytes memory blockHeaderBytes,
-        uint32 blockHeight,
-        uint256 chainWork)
+        uint32 blockHeight
+        )
         public
         {
         // TESTCASE: Check that function is only called once
@@ -84,10 +84,9 @@ contract BrokenRelay {
 
         bytes32 blockHeaderHash = blockHashFromHeader(blockHeaderBytes);
         _heaviestBlock = blockHeaderHash;
-        _highScore = chainWork;
+        _heaviestHeight = blockHeight;
         _headers[blockHeaderHash].merkleRoot = getMerkleRootFromHeader(blockHeaderBytes);
         _headers[blockHeaderHash].blockHeight = blockHeight;
-        _headers[blockHeaderHash].chainWork = chainWork;
         emit StoreHeader(blockHeaderHash, blockHeight);
     }
 
@@ -108,36 +107,35 @@ contract BrokenRelay {
 
         // TESTCASE: check that the block header does not yet exists in storage, i.e., that is not a duplicate submission
         // Note: merkleRoot is always set
-        require(_headers[hashCurrentBlock].merkleRoot == bytes32(0x0), ERR_DUPLICATE_BLOCK);
+        require(_headers[hashCurrentBlock].merkleRoot == 0, ERR_DUPLICATE_BLOCK);
     
         // TESTCASE:check that referenced previous block exists in storage
-        require(_headers[hashPrevBlock].merkleRoot != bytes32(0x0), ERR_PREV_BLOCK);
+        require(_headers[hashPrevBlock].merkleRoot != 0, ERR_PREV_BLOCK);
 
         uint256 target = getTargetFromHeader(blockHeaderBytes);
 
         // TESTCASE: Check the PoW solution matches the target specified in the block header
         require(hashCurrentBlock <= bytes32(target), ERR_LOW_DIFF);
 
-        // Calculate and set chainWork
-        uint256 difficulty = getDifficulty(target);
-        uint256 chainWorkPrevBlock = _headers[hashPrevBlock].chainWork;
-        uint256 chainWork = chainWorkPrevBlock + difficulty;
+        // NOTE: for simplicity, we do not check retargetting here.
+        // That is, we assume constant difficulty in this example!
+        // A fully functional relay must check retarget!
 
-        // Set blockheight
+        // Calc. blockheight
         uint256 blockHeight = 1 + _headers[hashPrevBlock].blockHeight;
 
-        // TESTCASE: check that the submitted block has more accumulated PoW than the stored heaviest block
-        require(chainWork > _highScore, ERR_NOT_MAIN_CHAIN);
+        // Check that the submitted block is extending the main chain
+        require(blockHeight > _heaviestHeight, ERR_NOT_MAIN_CHAIN);
 
-        // Update stored heaviest block and chainWork
+        // Update stored heaviest block and height
         _heaviestBlock = hashCurrentBlock;
-        _highScore = chainWork;
+        _heaviestHeight = blockHeight;
 
         // Write block header to storage
         bytes32 merkleRoot = getMerkleRootFromHeader(blockHeaderBytes);
         _headers[hashCurrentBlock].merkleRoot = merkleRoot;
         _headers[hashCurrentBlock].blockHeight = blockHeight;
-        _headers[hashCurrentBlock].chainWork = chainWork;
+
         // Update main chain reference
         _mainChain[blockHeight] = hashCurrentBlock;
 
@@ -152,67 +150,69 @@ contract BrokenRelay {
     * @param merkleProof  merkle tree path (concatenated LE sha256 hashes)
     * @return True if txid is at the claimed position in the block at the given blockheight, False otherwise
     */
-    function verifxTX(
+    function verifyTx(
         bytes32 txid,
         uint256 txBlockHeight,
         uint256 txIndex,
-        bytes memory merkleProof,
+        bytes32[] memory merkleProof,
         uint256 confirmations)
         public returns(bool)
         {
         // TESTCASE: Check that txid is not 0
-        require(txid != bytes32(0x0), ERR_INVALID_TXID);
+        require(txid != 0 , ERR_INVALID_TXID);
 
-        // TESTCASE: check if tx hash requested confirmations.
+        // TESTCASE: Check merkle proof structure, 1st hash == txid
+        require(merkleProof[0].flip32Bytes() == txid, ERR_INVALID_TXID);
+        
+        // TESTCASE 9: check if tx hash requested confirmations.
         require(_headers[_heaviestBlock].blockHeight - txBlockHeight >= confirmations, ERR_CONFIRMS);
 
         bytes32 blockHeaderHash = _mainChain[txBlockHeight];
         bytes32 merkleRoot = _headers[blockHeaderHash].merkleRoot;
         
-        // TESTCASE: Check merkle proof structure, 1st hash == txid
-        require(merkleProof.slice(0, 32).toBytes32() == txid, ERR_MERKLE_PROOF);
-
-        // Compute merkle tree root and check if it matches the specified block's merkle tree root
-        if(computeMerkle(txid, txIndex, merkleProof) == merkleRoot){
+        // TESTCASE 10: save costs if only 1 TX in block
+        if(merkleProof.length == 1){
+            require(merkleProof[0] == merkleRoot,ERR_VERIFY_TX);
             emit VerityTransaction(txid, txBlockHeight);
             return true;
         }
-        return false;
 
+
+
+        // Compute merkle tree root and check if it matches the specified block's merkle tree root
+        bytes32 calcRoot = computeMerkle(txIndex, merkleProof);
+
+        require(calcRoot == merkleRoot, ERR_VERIFY_TX);
+
+        emit VerityTransaction(txid, txBlockHeight);
+
+        return true;
     }
 
 
     // HELPER FUNCTIONS
     /**
     * @notice Reconstructs merkle tree root given a transaction hash, index in block and merkle tree path
-    * @param txHash hash of to be verified transaction
     * @param txIndex index of transaction given by hash in the corresponding block's merkle tree
     * @param merkleProof merkle tree path to transaction hash from block's merkle tree root
     * @return merkle tree root of the block containing the transaction, meaningless hash otherwise
     */
     function computeMerkle(
-        bytes32 txHash,
         uint256 txIndex,
-        bytes memory merkleProof)
-        internal view returns(bytes32)
+        bytes32[] memory merkleProof)
+        public pure returns(bytes32)
         {
-    
-        // TESCASE: Catch special case, where only coinbase tx in block to save gas. Root == proof
-        if(merkleProof.length == 32) return merkleProof.toBytes32();
 
-        // TESTCASE: Check expected Merkle proof length. Must be greater than 32 and power of 2. Case length == 32 covered above.
-        require(merkleProof.length > 32 && (merkleProof.length & (merkleProof.length - 1)) == 0, ERR_MERKLE_PROOF);
-        
-        bytes32 resultHash = txHash;
+        bytes32 resultHash = merkleProof[0];
         uint256 txIndexTemp = txIndex;
         
-        for(uint i = 1; i < merkleProof.length / 32; i++) {
+        for(uint i = 1; i < merkleProof.length; i++) {
             if(txIndexTemp % 2 == 1){
-                resultHash = concatSHA256Hash(merkleProof.slice(i * 32, 32), abi.encodePacked(resultHash));
+                resultHash = concatSHA256Hash(merkleProof[i], resultHash);
             } else {
-                resultHash = concatSHA256Hash(abi.encodePacked(resultHash), merkleProof.slice(i * 32, 32));
+                resultHash = concatSHA256Hash(resultHash, merkleProof[i]);
             }
-            txIndexTemp /= 2;
+            txIndexTemp.div(2);
         }
         return resultHash;
     }
@@ -229,8 +229,8 @@ contract BrokenRelay {
     * @param right right side of the concatenation
     * @return sha256 hash of the concatenation of left and right
     */
-    function concatSHA256Hash(bytes memory left, bytes memory right) public pure returns (bytes32) {
-        return dblSha(abi.encodePacked(left, right)).toBytes32();
+    function concatSHA256Hash(bytes32 left, bytes32 right) public pure returns (bytes32) {
+        return dblSha(abi.encodePacked(left).concat(abi.encodePacked(right))).toBytes32();
     }
     /**
     * @notice Performs Bitcoin-like double sha256 hash calculation
@@ -272,18 +272,16 @@ contract BrokenRelay {
     }
     // https://en.bitcoin.it/wiki/Difficulty
     function getDifficulty(uint256 target) public pure returns(uint256){
-        return 0x00000000FFFF0000000000000000000000000000000000000000000000000000 / target;
+        return DIFF_TARGET.div(target);
     }
 
     function getBlockHeader(bytes32 blockHeaderHash) public view returns(
         uint256 blockHeight,
-        uint256 chainWork,
         bytes32 merkleRoot
     ){
         require(_headers[blockHeaderHash].merkleRoot != bytes32(0x0), ERR_BLOCK_NOT_FOUND);
         blockHeight = _headers[blockHeaderHash].blockHeight;
-        chainWork = _headers[blockHeaderHash].chainWork;
         merkleRoot = _headers[blockHeaderHash].merkleRoot;
-        return(blockHeight, chainWork, merkleRoot);
+        return(blockHeight, merkleRoot);
     }
 }

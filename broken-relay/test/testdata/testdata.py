@@ -10,7 +10,7 @@ from bitcoin.wallet import *
 
 DIRNAME = path.dirname(__file__)
 FILENAME = path.join(DIRNAME, 'blocks.json')
-BLOCKS = 10
+BLOCKS = 20
 
 bitcoin.SelectParams('regtest')
 
@@ -20,28 +20,21 @@ proxy = bitcoin.rpc.RawProxy()
 # Generates a number of blocks
 # @param number: number of blocks to generate
 # returns number of block hashes
-def generateBlocks(number):
+def generateEmptyBlocks(number):
     # setup address to generate blocks
-    address_1 = proxy.getnewaddress()
-    address_2 = proxy.getnewaddress()
-
+   
     # generate first 101 blocks (maturation period + 1)
-    proxy.generatetoaddress(101, address_1)
-
-    # mine a number of blocks that include transactions
-    blockhashes = []
-    for i in range(number):
-        # generate some transactions
-        proxy.sendtoaddress(address_2, 10)
-        # mine block with transaction and append to block hashes
-        blockhashes.append(proxy.generatetoaddress(1, address_1)[0])
-        # store blockhashes and tx hashes in that block
-        # hashes.append({"blockhash": blockhash, "txhash": txhash})
+    return proxy.generatetoaddress(number, address_1)[0]
 
 
-    # only return blocks with more than 100 confirmations
-    print("### Generated {} blocks with more than 100 confirmations ###".format(number))
-    return blockhashes
+def generateBlockWithTx(numberTx):
+
+    for i in range(numberTx):
+        proxy.sendtoaddress(address_2, 0.0001)
+    
+    return proxy.generatetoaddress(1, address_1)[0]
+
+
 
     # send coins 
     # proxy.sendtoaddress(address2, 10)
@@ -51,6 +44,8 @@ def generateBlocks(number):
     #     # print(blockhash)
     #     blocks.append(proxy.getblockheader(blockhash))
 
+
+#
 # Exports the block headers to a JSON file
 # @param blockhashes: 
 def exportBlocks(blockhashes):
@@ -90,11 +85,11 @@ def exportBlocks(blockhashes):
                     start = 170 + 64*h
                     end = 170 + 64*(h+1)
                     hash = proof[start:end]
-                    merklePath.append("0x" + str(hash))
+                    merklePath.append("0x" + hash.decode("utf-8"))
 
                 # print(merklePath)
 
-                block["tx"][i] = {"tx_id": "0x" + tx_id, "merklePath": merklePath, "tx_index": i}
+                block["tx"][i] = {"tx_id": "0x" + str(tx_id), "merklePath": merklePath, "tx_index": i}
 
             except CalledProcessError as e:
                 print(e.stderr)
@@ -121,7 +116,30 @@ def flipBytes(b):
     
 
 if __name__ == "__main__":
-    blockhashes = generateBlocks(BLOCKS)
+
+    address_1 = proxy.getnewaddress()
+    address_2 = proxy.getnewaddress()
+
+    generateEmptyBlocks(101)
+
+    # first block is empty
+    blockhashes = []
+    
+    blockhashes.append(generateEmptyBlocks(1))
+    blockhashes.append(generateEmptyBlocks(1))
+
+    
+    # generate block with 1 TX
+    blockhashes.append(generateBlockWithTx(1))
+
+    # generate a block with a lot of TX
+    blockhashes.append(generateBlockWithTx(50))
+
+    # fill with blocks
+    for i in range(BLOCKS):
+        blockhashes.append(generateBlockWithTx(1))
+
+
     exportBlocks(blockhashes)
 
 

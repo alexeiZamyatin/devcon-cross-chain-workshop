@@ -11,6 +11,7 @@ const testdata = require('./testdata/blocks.json')
 var dblSha256Flip = helpers.dblSha256Flip
 var flipBytes = helpers.flipBytes
 
+// Correct functionality test cases
 contract('BrokenRelay storeHeader', async(accounts) => {
 
     const storeGenesis = async function(){
@@ -18,7 +19,6 @@ contract('BrokenRelay storeHeader', async(accounts) => {
         await relay.setInitialParent(
             genesis["header"],
             genesis["height"],
-            web3.utils.hexToNumber(genesis["chainwork"])
             );
     }
 
@@ -32,9 +32,8 @@ contract('BrokenRelay storeHeader', async(accounts) => {
         genesis = testdata[0]
         let submitHeaderTx = await relay.setInitialParent(
             genesis["header"],
-            genesis["height"],
-            web3.utils.hexToNumber(genesis["chainwork"]),
-            );
+            genesis["height"]
+        );
         // check if event was emmitted correctly
         truffleAssert.eventEmitted(submitHeaderTx, 'StoreHeader', (ev) => {
             return ev.blockHeight == genesis["height"];
@@ -45,7 +44,6 @@ contract('BrokenRelay storeHeader', async(accounts) => {
             genesis["hash"]
         )
         assert.equal(storedHeader.blockHeight.toNumber(), genesis["height"])
-        assert.equal(storedHeader.chainWork.toNumber(), genesis["chainwork"])
         assert.equal(flipBytes(storedHeader.merkleRoot),  genesis["merkleroot"])
     
         console.log("Gas used: " + submitHeaderTx.receipt.gasUsed)
@@ -65,34 +63,77 @@ contract('BrokenRelay storeHeader', async(accounts) => {
         console.log("Total gas used: " + submitBlock1.receipt.gasUsed);
    });
 
+
    
-
-    it("submit block 1 with invalid pow - should fail", async () => {   
-        
-        storeGenesis();     
-        await truffleAssert.reverts(
-            relay.submitBlockHeader(
-                constants.HEADERS.BLOCK_1_INVALID_POW
-                ),
-                constants.ERROR_CODES.ERR_LOW_DIFF
-            );
+   it("VerifyTx with confirmations", async () => {   
+    storeGenesis()
+    block1 = testdata[1]    
+    let submitBlock1 = await relay.submitBlockHeader(
+        block1["header"]
+    );
+    truffleAssert.eventEmitted(submitBlock1, 'StoreHeader', (ev) => {
+        return ev.blockHeight == block1["height"];
     });
 
-    it("submit duplicate block header (block 1) - should fail", async () => {   
-    
-        storeGenesis();    
-        let submitBlock1 = await relay.submitBlockHeader(
-            constants.HEADERS.BLOCK_1
+
+    // push blocks
+    confirmations = 3
+    testdata.slice(2,8).forEach(b => {
+        relay.submitBlockHeader(
+            b["header"]
         );
-        truffleAssert.eventEmitted(submitBlock1, 'StoreHeader', (ev) => {
-            return ev.blockHeight == 1;
-        });   
-        await truffleAssert.reverts(
-            relay.submitBlockHeader(
-                constants.HEADERS.BLOCK_1
-                ),
-                constants.ERROR_CODES.ERR_DUPLICATE_BLOCK
-            );
     });
 
+    tx = block1["tx"][0]
+    let verifyTx = await relay.verifyTx(
+        tx["tx_id"],
+        block1["height"],
+        tx["tx_index"],
+        tx["merklePath"],
+        confirmations
+    )
+    truffleAssert.eventEmitted(verifyTx, 'VerityTransaction', (ev) => {
+        return ev.txid == tx["tx_id"];
+    });
+    console.log("Total gas used: " + verifyTx.receipt.gasUsed);
+
+    });
+
+    it("VerifyTx large block", async () => {   
+        storeGenesis()
+        testdata.slice(1,3).forEach(b => {
+            relay.submitBlockHeader(
+                b["header"]
+            );
+        });   
+        block = testdata[3]    
+
+        let submitBlock = await relay.submitBlockHeader(
+            block["header"]
+        );
+        truffleAssert.eventEmitted(submitBlock, 'StoreHeader', (ev) => {
+            return ev.blockHeight == block["height"];
+        });
+
+        //truffleAssert.eventEmitted(submitBlock2, 'StoreHeader', (ev) => {
+        //    return ev.blockHeight == block2["height"];
+       // });
+    
+        confirmations = 0
+    
+        tx = block["tx"][0]
+        let verifyTx = await relay.verifyTx(
+            tx["tx_id"],
+            block["height"],
+            tx["tx_index"],
+            tx["merklePath"],
+            confirmations
+        )
+
+        truffleAssert.eventEmitted(verifyTx, 'VerityTransaction', (ev) => {
+            return ev.txid == tx["tx_id"];
+        });
+        console.log("Total gas used: " + verifyTx.receipt.gasUsed);
+    
+        });
 })

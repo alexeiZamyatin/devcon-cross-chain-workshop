@@ -25,4 +25,22 @@ contract('BrokenRelay helper functions', async(accounts) => {
     });
 
 
+    it("concat sha256 hash", async () => {
+        left = "0x544deaa14ea4ba4e78707035de132ab927ea671edd3f07b9028bea5f264b5752"
+        right = "0x99a76a9aa39ad6a3c1fecc1d557650a69ebddb7c50dcb867cffafcc54eeacc2f"
+        root = "0xd8ac16fff73a56a00af00ca4d1a74a3e048730136e3dea6b32468a8d1004150c"
+        let concatHash = await relay.concatSHA256Hash(left, right)
+        
+        assert.equal(concatHash, flipBytes(root))
+    });
+
+    it("compute merkle", async () => {
+        block1 = testdata[2]    
+        tx = block1["tx"][0]
+
+        let merkleRoot = await relay.computeMerkle(tx["tx_index"], tx["merklePath"])
+        
+        assert.equal(merkleRoot, flipBytes(block1["merkleroot"]))
+    });
+
 });
