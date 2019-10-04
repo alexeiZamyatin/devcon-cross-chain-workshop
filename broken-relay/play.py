@@ -1,6 +1,8 @@
 import json
 import requests
 import sys
+import subprocess
+from subprocess import CalledProcessError
 
 BASE = "http://localhost:3000"
 
@@ -48,6 +50,10 @@ def register():
 def submit():
     pass
 
+def test():
+    output = subprocess.run(["truffle", "test"], stdout=subprocess.PIPE)
+    print(output.stdout.rstrip())
+
 def display_help():
     print("")
 
@@ -69,6 +75,9 @@ if __name__ == "__main__":
             stop()
         elif command == "submit":
             submit()
+            command = None
+        elif command == "test":
+            test()
             command = None
         else:
             print("Command not understood. Type 'help' for help and 'quit' to exit.")
