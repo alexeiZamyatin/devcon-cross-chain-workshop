@@ -1,5 +1,18 @@
 # Relay Attack Game Server
 
+## Game Server
+
+The game server exposes a REST API on port 3000. 
+
+
+## Getting started
+
+Install a virtual environment with `virtualenv venv` and active it with `source venv/bin/active`. Install the required packages with `pip install -r requirements.txt`.
+
+Start the game server with `python app.py`.
+
+## APIs
+
 ## Server-side TODO
 
 - Setup private test network with Geth
