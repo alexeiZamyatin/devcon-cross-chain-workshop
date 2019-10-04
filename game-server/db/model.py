@@ -9,7 +9,7 @@ class Teams(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    score = Column(Integer)
+    score = Column(Integer, default=0)
     contract = Column(String)
 
     def __repr__(self):
