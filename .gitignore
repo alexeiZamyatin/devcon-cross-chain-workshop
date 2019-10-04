@@ -145,7 +145,7 @@ typings/
 */node_modules
 
 # testing
-
+*/installed_contracts/
 # production
 build/
 build_webpack
