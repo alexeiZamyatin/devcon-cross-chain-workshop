@@ -15,21 +15,22 @@ Note: add a "clearData()" function that deletes all stored data from contract (s
 ## Test cases:
 
 ### setInitialParant
-* Repeated initialization with another genesis block (check that function can be called only once)
+* Testcase 1) Repeated initialization with another genesis block (check that function can be called only once)
 
 ### storeBlockHeader
-* Invalid block header size (check that 80 bytes)
-* Duplicate block submission (check if block already exists in main chain)
-* Skip a block in block submission (check that prev block is in main chain)
-* Weak block submission (check that difficulty matches _constant_ target)
+* Testcase 2) Duplicate block submission (check if block already exists in main chain)
+* Testcase 3ab) Invalid block header size (check that 80 bytes)
+* Testcase 4) Skip a block in block submission (check that prev block is in main chain)
+* Testcase 5) Weak block submission (check that difficulty matches _constant_ target)
 
 ### verifyTX
-* invalid txID (check size and non-zero)
-* Instantly return root if path length is 32 (check expected gas costs here!)
-* invalid merkle tree proof size (check that > 32 and power of 2)
-* Extract merkle tree root and store in contract (correct splice + write to pre-define mapping)
-* confirmation check missing
+* Testcase 6) invalid txID format (check non-zero)
+* Testcase 7) Wrong txid parsed for verification
+* Testcase 8) Missing confirmation check
+* Testcase 9) Performance: instantly return root if path length is 32 (check expected gas costs here!)
 
+
+TODO:??? 
 ### forkHandling
 * Detect a fork store correctly
 * Fix "main chain early delete": our contract instantly deletes the main chain, as soon as a fork overtakes it. However, a testcase handles the scenario where the relay is our of sync and the main chain is in fact much longer - and main chain blocks get submitted after the fork. Participants must only remove the delete statement to fix this.
