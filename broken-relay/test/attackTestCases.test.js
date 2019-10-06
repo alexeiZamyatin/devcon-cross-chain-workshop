@@ -58,7 +58,7 @@ contract('Attack Test Cases', async(accounts) => {
             */
     });
 
-    it("TESTCASE 4c: too large block header - should fail", async () => {   
+    it("TESTCASE 4a: too large block header - should fail", async () => {   
         storeGenesis();  
         block1 = testdata[1]  
         await truffleAssert.reverts(
