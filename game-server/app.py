@@ -1,18 +1,19 @@
 import json
 import subprocess
+from shutil import copy
+from os import path
 from subprocess import CalledProcessError
 
 from tornado.httpserver import HTTPServer
-from tornado.web import HTTPError
 from tornado.ioloop import IOLoop
-from tornado.web import Application, RequestHandler
+from tornado.web import Application, HTTPError, RequestHandler
 
 from db.model import Teams, metadata
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # setup database
-engine = create_engine('sqlite:///:memory:', echo=True)   
+engine = create_engine('sqlite:///teams.db', echo=True)   
 Session = sessionmaker(bind=engine)
 metadata.create_all(engine, checkfirst=True)
 db = Session()
@@ -56,32 +57,46 @@ class Score(RequestHandler):
 
 
 class SubmitContract(RequestHandler):
+    def get(self):
+        pass
+    
     def post(self):
-        # get the contract address
+        # get the contract
         submission = json.loads(self.request.body)
         # check if team exists
         team = db.query(Teams).filter_by(id=submission['id']).first()
 
         response = {}
 
-        if team and submission['contract']:
-            response['message'] = "Submitted contract for team {}".format(team.name)
+        if team and submission['results']:
+            response['message'] = "Submitted results for team {}".format(team.name)
+            
         elif team:
-            response['message'] = "Please submit a contract"
+            response['message'] = "Please submit your results"
         else:
             response['message'] = "Team ID not found"
 
         self.write(response)
 
-def execute_test(test):
-    output = subprocess.run(["truffle", "test"], stdout=subprocess.PIPE, check=True)
+# parse results and update score of the team
 
+# not used at the moment
+def execute_test(test):
+    try:
+        output = subprocess.run(["truffle", "test"], stdout=subprocess.PIPE, check=True)
+        result = output.stdout.rstrip()
+
+        score = 0
+
+        return score
+    except CalledProcessError:
+        raise HTTPError(500)
 
 def make_app():
   urls = [
       ("/", Leaderboard),
-      ("/api/team", RegisterTeam),
-      ("/api/contract", SubmitContract),
+      ("/api/register", RegisterTeam),
+      ("/api/submit", SubmitContract),
       ("/api/score", Score)
       ]
   return Application(urls, debug=True)

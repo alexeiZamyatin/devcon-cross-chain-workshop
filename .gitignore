@@ -167,3 +167,4 @@ yarn.lock
 package-lock.json
 
 # End of https://www.gitignore.io/api/node,solidity,soliditytruffle
+game-server/teams.db
