@@ -38,7 +38,7 @@ def init():
     print(banner)
 
 def register():
-    URL = BASE + "/api/team"
+    URL = BASE + "/api/register"
     name = None
 
     while not name:
@@ -59,38 +59,60 @@ def register():
     print(response["message"])
 
 def submit():
-    URL = BASE + "/api/contract"
+    URL = BASE + "/api/submit"
 
+    results = {}
+
+    # try:
+        # get the testcase from the server
+        # submit team_id
+
+    # run tests locally
     try:
-        # compile contracts 
-        for output in execute(["truffle", "compile"]):
-            print(output, end="")
-
-        # load contract file
-        contract_file = os.path.join("build", "contracts", "BrokenRelay.json")
-        with open(contract_file, "r") as file:
-            contract = json.load(file)
-
-        # prepare submission with team id
-        data = json.dumps({
-            'id': config['id'],
-            'contract': contract
-            })
-
-        # submit
-        request = requests.post(URL, headers={'Content-Type': 'application/json' }, data=data)
-        response = request.json()
-
-        print(response["message"])
+        # perform tests locally
+        # parses the output line by line
+        for output in execute(["truffle", "test"]):
+            # check if it includes the testcases
+            if "TESTCASE" in output:
+                # split the output string into a list
+                # list[0] is the result of the test (pass/fail)
+                # list[1] is test case numerb plus any additional information
+                output_list = output.split(" TESTCASE ", 1)
+                # list[1] looks like "1: set ....". Split at : and return the first elemet
+                testcase = output_list[1].split(":",1)[0]
+                # store the result of the testcase
+                results[testcase] = True if "✓" in output_list[0] else False
 
     except CalledProcessError:
-        print("===== Compiling failed ====")
-    except FileNotFoundError as e:
-        print(e)
+        print("===== Tests failed ====")
+    
+    # report results to server
+    # prepare submission with team id
+    data = json.dumps({
+        'id': config['id'],
+        'results': results
+    })
+
+    # submit
+    request = requests.post(URL, headers={'Content-Type': 'application/json' }, data=data)
+    response = request.json()
+
+    print(response["message"])
+
+
+
+    # print(results)
+
+    # except FileNotFoundError as e:
+    #     print(e)
 
 def leaders():
+    URL = BASE
     # get the leaderboard
-    pass
+    request = requests.get(URL)
+    response = request.json()
+
+    print(json.dumps(response))
 
 def score():
     URL = BASE + "/api/score?id={}".format(config["id"])
@@ -134,6 +156,8 @@ if __name__ == "__main__":
             submit()
         elif command == "test":
             test()
+        elif command == "leaders":
+            leaders()
         else:
             print("Command not understood. Type 'help' for help and 'quit' to exit.")
         command= None
