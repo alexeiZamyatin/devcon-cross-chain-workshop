@@ -39,7 +39,7 @@ contract('Attack Test Cases', async(accounts) => {
     });
 
     // STORE BLOCK HEADER
-    it("TESTCASE 3: duplicate block submission - should fail", async () => {   
+    it("TESTCASE 2: duplicate block submission - should fail", async () => {   
         storeGenesis();  
         block1 = testdata[1]  
         let submitBlock1 = await relay.submitBlockHeader(
@@ -58,7 +58,7 @@ contract('Attack Test Cases', async(accounts) => {
             */
     });
 
-    it("TESTCASE 4a: too large block header - should fail", async () => {   
+    it("TESTCASE 3a: too large block header - should fail", async () => {   
         storeGenesis();  
         block1 = testdata[1]  
         await truffleAssert.reverts(
@@ -69,7 +69,7 @@ contract('Attack Test Cases', async(accounts) => {
             );
     });
 
-    it("TESTCASE 4b: too small block header - should fail", async () => {   
+    it("TESTCASE 3b: too small block header - should fail", async () => {   
         storeGenesis();  
         block1 = testdata[1]    
         await truffleAssert.reverts(
@@ -80,7 +80,7 @@ contract('Attack Test Cases', async(accounts) => {
             );
     });
 
-    it("TESTCASE 5: submit block where prev block is not in main chain - should fail", async () => {   
+    it("TESTCASE 4: submit block where prev block is not in main chain - should fail", async () => {   
         
         storeGenesis();    
         block2 = testdata[2]   
@@ -92,7 +92,7 @@ contract('Attack Test Cases', async(accounts) => {
             );
     });
 
-    it("TESTCASE 6: weak block submission - should fail", async () => {   
+    it("TESTCASE 5: weak block submission - should fail", async () => {   
         // invalid header for block 500000
         fakeGenesis = {
         "hash": "0x00000000000000000012af6694accf510ca4a979824f30f362d387821564ca93",
@@ -120,7 +120,7 @@ contract('Attack Test Cases', async(accounts) => {
     });
     
     
-    it("TESTCASE 7: empty txid - should fail", async () => {   
+    it("TESTCASE 6: empty txid - should fail", async () => {   
         storeGenesis()
         block1 = testdata[1]    
         let submitBlock1 = await relay.submitBlockHeader(
@@ -142,7 +142,7 @@ contract('Attack Test Cases', async(accounts) => {
         )
 
     });
-    it("TESTCASE 8: wrong txid parsed for verification - should fail!", async () => {   
+    it("TESTCASE 7: wrong txid parsed for verification - should fail!", async () => {   
         storeGenesis()
         block1 = testdata[1]    
         let submitBlock1 = await relay.submitBlockHeader(
@@ -165,7 +165,7 @@ contract('Attack Test Cases', async(accounts) => {
         )
     });
 
-    it("TESTCASE 9: missing tx confirmation check - should fail", async () => {   
+    it("TESTCASE 8: missing tx confirmation check - should fail", async () => {   
         storeGenesis()
         block1 = testdata[1]    
         let submitBlock1 = await relay.submitBlockHeader(
@@ -197,7 +197,7 @@ contract('Attack Test Cases', async(accounts) => {
     });
 
 
-    it("TESTCASE 10: performance: instantly return if only 1 hash - save costs!", async () => {   
+    it("TESTCASE 9: performance: instantly return if only 1 hash - save costs!", async () => {   
         storeGenesis()
         block1 = testdata[1]    
         let submitBlock1 = await relay.submitBlockHeader(
@@ -222,12 +222,12 @@ contract('Attack Test Cases', async(accounts) => {
 
 
     // FORK HANDLING 
-    it("TESTCASE 11: fork submission handling", async () => {   
+    it("TESTCASE 10: fork submission handling", async () => {   
         assert(false);
         // TODO
     });
 
-    it("TESTCASE 12: main chain deleted too early - save costs!", async () => {   
+    it("TESTCASE 11: main chain deleted too early - save costs!", async () => {   
         assert(false);
         // TODO
     });
