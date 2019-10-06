@@ -53,7 +53,7 @@ def register():
         request = requests.post(URL, headers={'Content-Type': 'application/json' }, data=data)
         response = request.json()
     
-    except JSONDecoderError:
+    except:
         print("Something went wrong with the server")
 
     config["name"] = response["name"]
@@ -80,7 +80,7 @@ def submit():
             if "TESTCASE" in output:
                 # split the output string into a list
                 # list[0] is the result of the test (pass/fail)
-                # list[1] is test case numerb plus any additional information
+                # list[1] is test case number plus any additional information
                 output_list = output.split(" TESTCASE ", 1)
                 # list[1] looks like "1: set ....". Split at : and return the first elemet
                 testcase = output_list[1].split(":",1)[0]
@@ -98,17 +98,14 @@ def submit():
     })
 
     # submit
-    request = requests.post(URL, headers={'Content-Type': 'application/json' }, data=data)
-    response = request.json()
+    try:
+        request = requests.post(URL, headers={'Content-Type': 'application/json' }, data=data)
+        response = request.json()
 
-    print(response["message"])
+        print(response["message"])
+    except:
+        print("Something went wrong with the server")
 
-
-
-    # print(results)
-
-    # except FileNotFoundError as e:
-    #     print(e)
 
 def leaders():
     URL = BASE
