@@ -9,6 +9,7 @@ from tornado.ioloop import IOLoop
 from tornado.web import Application, HTTPError, RequestHandler
 
 from db.model import Teams, metadata
+from scores import scores
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -70,7 +71,7 @@ class SubmitContract(RequestHandler):
 
         if team and submission['results']:
             response['message'] = "Submitted results for team {}".format(team.name)
-            
+            update_score(team, submission['results'])
         elif team:
             response['message'] = "Please submit your results"
         else:
@@ -79,6 +80,18 @@ class SubmitContract(RequestHandler):
         self.write(response)
 
 # parse results and update score of the team
+def update_score(team, results):
+    # TODO: check if already submitted same code
+    team.submission += 1
+    # loop through the results
+    for case, result in results.items():
+        # if result is true update score
+        # else leave score as is
+        if result:
+            team.score += scores[case]
+    db.commit()
+
+
 
 # not used at the moment
 def execute_test(test):
