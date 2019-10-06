@@ -14,16 +14,26 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # setup database
-engine = create_engine('sqlite:///teams.db', echo=True)   
+engine = create_engine('sqlite:///teams.db', echo=True)
 Session = sessionmaker(bind=engine)
 metadata.create_all(engine, checkfirst=True)
 db = Session()
+
+class Home(RequestHandler):
+    def get(self):
+        self.render("html/leaderboard.html")
 
 class Leaderboard(RequestHandler):
     def get(self):
         teams = db.query(Teams).order_by(Teams.score).all()
         message = [team.as_dict() for team in teams]
-        self.write(json.dumps(message))
+        #message = [
+        #    {"id": 0, "name": "bla", "score": 222},
+        #    {"id": 1, "name": "bla2", "score": 22},
+        #    {"id": 2, "name": "bla5", "score": 22},
+        #    {"id": 3, "name": "bla52", "score": 22},
+        #]
+        self.write({'teams': message})
 
 class RegisterTeam(RequestHandler):
     def post(self):
@@ -31,18 +41,18 @@ class RegisterTeam(RequestHandler):
         submission = json.loads(self.request.body)
         # check if team name is already in use
         team = db.query(Teams).filter_by(name=submission['name']).first()
-        
+
         response = {}
 
         if team:
-            # return existing team id 
-            response['message'] = 'Team exists with ID {}'.format(team.id) 
+            # return existing team id
+            response['message'] = 'Team exists with ID {}'.format(team.id)
         else:
             # return new team id
             team = Teams(name=submission['name'])
             db.add(team)
             db.commit()
-            response['message'] = 'Successfully added team {} with ID {}'.format(team.name, team.id) 
+            response['message'] = 'Successfully added team {} with ID {}'.format(team.name, team.id)
 
         response['id'] = team.id
         response['name'] = team.name
@@ -60,7 +70,7 @@ class Score(RequestHandler):
 class SubmitContract(RequestHandler):
     def get(self):
         files = path.join("testfiles", "case{}")
-    
+
     def post(self):
         # get the contract
         submission = json.loads(self.request.body)
@@ -112,10 +122,11 @@ def execute_test(test):
 
 def make_app():
   urls = [
-      ("/", Leaderboard),
+      ("/api/leaderboard", Leaderboard),
       ("/api/register", RegisterTeam),
       ("/api/submit", SubmitContract),
-      ("/api/score", Score)
+      ("/api/score", Score),
+      ("/", Home)
       ]
   return Application(urls, debug=True)
 
@@ -127,7 +138,7 @@ def main():
     # server = HTTPServer(app)
     # server.bind(3000)
     # server.start(0)
-    IOLoop.current().start() 
-  
+    IOLoop.current().start()
+
 if __name__ == '__main__':
     main()
