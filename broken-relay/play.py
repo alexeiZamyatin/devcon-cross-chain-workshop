@@ -49,8 +49,12 @@ def register():
 
     data = json.dumps({"name": name})
 
-    request = requests.post(URL, headers={'Content-Type': 'application/json' }, data=data)
-    response = request.json()
+    try:
+        request = requests.post(URL, headers={'Content-Type': 'application/json' }, data=data)
+        response = request.json()
+    
+    except JSONDecoderError:
+        print("Something went wrong with the server")
 
     config["name"] = response["name"]
     config["id"] = response["id"]
