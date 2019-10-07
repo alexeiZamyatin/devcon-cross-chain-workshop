@@ -1,7 +1,8 @@
 import json
 import subprocess
 from shutil import copy
-from os import path
+from os import path, listdir
+import fnmatch
 from subprocess import CalledProcessError
 
 from tornado.httpserver import HTTPServer
@@ -21,7 +22,7 @@ db = Session()
 
 class Leaderboard(RequestHandler):
     def get(self):
-        teams = db.query(Teams).order_by(Teams.score).all()
+        teams = db.query(Teams).order_by(Teams.score.desc()).all()
         message = [team.as_dict() for team in teams]
         self.write(json.dumps(message))
 
@@ -56,10 +57,33 @@ class Score(RequestHandler):
         if not team: raise HTTPError(404)
         self.write({'id': team.id, 'score': team.score})
 
+# TODO: implement hint function
+
 
 class SubmitContract(RequestHandler):
     def get(self):
-        files = path.join("testfiles", "case{}")
+        # team id
+        id = self.get_argument('id', None)
+        # request a testcase
+        case = self.get_argument('case', None)
+
+        if not id: raise HTTPError(404, "Need a team ID")
+        if not case: raise HTTPError(404, "Need a case submission")
+
+        try:
+            for file in listdir(path.join("testfiles")):
+                if fnmatch.fnmatch(file, '{}*'.format(case)):
+                    with open(path.join("testfiles", file)) as test_file:
+                        content = test_file.read()
+                        file_name = file
+
+                    self.write({'case': case, 'name': file_name, 'content': content})
+                    break
+        except FileNotFoundError:
+            raise HTTPError(500, "Requested test case not found")
+
+
+
     
     def post(self):
         # get the contract
@@ -82,7 +106,7 @@ class SubmitContract(RequestHandler):
 # parse results and update score of the team
 def update_score(team, results):
     # TODO: check if already submitted same code
-    team.submission += 1
+    team.submissions += 1
     # loop through the results
     total_score = 0
     for case, result in results.items():
@@ -92,7 +116,7 @@ def update_score(team, results):
             # SCORES is imported from "scores.py"
             total_score += SCORES[case]
             # update the score for the case
-            setattr(team, "case{}".format(case), SCORES[case])
+            setattr(team, "test{}".format(case), SCORES[case])
     team.score = total_score
     db.commit()
 
