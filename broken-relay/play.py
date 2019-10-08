@@ -9,6 +9,23 @@ from subprocess import CalledProcessError
 import requests
 
 BASE = "http://localhost:3000"
+TESTS = {
+    "1": False,
+    "2": False, 
+    "3a": False, 
+    "3b": False,
+    "4": False,
+    "5": False,
+    "6": False,
+    "7": False,
+    "8": False, 
+    "9": False
+}
+
+def print_file(name):
+    with open(os.path.join("docs", name), "r") as file:
+        text = file.read()
+    print(text)
 
 def read_config():
     try:
@@ -33,9 +50,8 @@ def execute(cmd):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def init():
-    with open("banner.txt", "r") as file:
-        banner = file.read()
-    print(banner)
+    print_file("banner.txt")
+    print_file("intro.txt")
 
 def register():
     URL = BASE + "/api/register"
@@ -58,20 +74,47 @@ def register():
 
     config["name"] = response["name"]
     config["id"] = response["id"]
+    config["tests"] = TESTS
     update_config(config)
 
     print(response["message"])
 
+def hint():
+    # return which cases are not yet solved
+    print("")
+    print("You are under attack! Problems {} are not yet solved!".format([key if value else None for key, value in config["tests"].items()]))
+
+    # as which case is solved now
+    next_test = input("Please enter the number of the attack you want to have a hint for: ")
+
+    if not next_test in config["tests"]:
+        print("Please enter a valid number!")
+        return
+
+    # Print which test case is submitted
+    # print("You are submitting the solution for case {}".format(next_test))
+    
+    # get the testcase from the server
+    try:
+        # submit team_id
+        url = URL + "?id={}&case={}".format(config["id"], next_test)
+
+        request = requests.get(url)
+        response = request.json()
+
+        with open(os.path.join("test", response["name"]), "w+") as test_file:
+            test_file.write(response["content"])
+    except:
+        print("Problem with getting the test case from the server")
+        return
+ 
+
 def submit():
     URL = BASE + "/api/submit"
 
-    results = {}
-
-    # try:
-        # get the testcase from the server
-        # submit team_id
-
+    print("Upgrading defenses...")
     # run tests locally
+    results = {}
     try:
         # perform tests locally
         # parses the output line by line
@@ -85,10 +128,17 @@ def submit():
                 # list[1] looks like "1: set ....". Split at : and return the first elemet
                 testcase = output_list[1].split(":",1)[0]
                 # store the result of the testcase
-                results[testcase] = True if "✓" in output_list[0] else False
+                if "✓" in output_list[0]:
+                    results[testcase] = True
+                    config["tests"][testcase] = True
+                    update_config(config)
+                    print("You successfully completed testcase {}.".format(testcase))
+                else:
+                    results[testcase] = False
+                    print("Sorry, testcase {} failed. TIP: you can request a hint and see the testcase in the 'test' folder.".format(testcase))
 
     except CalledProcessError:
-        print("===== Tests failed ====")
+        print("===== Oh no, you are still vulnerable! ====")
     
     # report results to server
     # prepare submission with team id
@@ -106,14 +156,30 @@ def submit():
     except:
         print("Something went wrong with the server")
 
+    score()
+
 
 def leaders():
-    URL = BASE
+    URL = BASE + "/api/leaderboard"
     # get the leaderboard
     request = requests.get(URL)
+    # returns a sorted list of teams
     response = request.json()
 
-    print(json.dumps(response))
+    leaderboard = []
+
+    print(response)
+
+    for team in response['teams']:
+        leaderboard.append((team["name"], team["score"]))
+
+    for i in range(len(leaderboard)):
+        name = leaderboard[i][0]
+        score = leaderboard[i][1]
+        # TODO: make this output format nice
+        print("{}: {}    {}".format(i+1, name, score))
+
+    # print(json.dumps(response))
 
 def score():
     URL = BASE + "/api/score?id={}".format(config["id"])
@@ -121,7 +187,7 @@ def score():
     request = requests.get(URL)
     response = request.json()
 
-    print("Your score is {}".format(response["score"]))
+    print("Your score is {}.".format(response["score"]))
 
 def test():
     try:
@@ -145,10 +211,12 @@ if __name__ == "__main__":
     register()
     command = None
     while not command:
-        command = input("What would you like to do next (test/submit/score/help/quit): ")
+        command = input("What would you like to do next?\n(hint/test/submit/score/leaders/help/quit): ")
 
         if command == "help":
             display_help()
+        elif command == "hint":
+            hint()
         elif command == "score":
             score()
         elif command == "quit":
