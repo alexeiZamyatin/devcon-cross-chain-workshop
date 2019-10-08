@@ -72,7 +72,6 @@ class Score(RequestHandler):
 
 class SubmitContract(RequestHandler):
     def get(self):
-<<<<<<< HEAD
         # team id
         id = self.get_argument('id', None)
         # request a testcase
@@ -96,10 +95,6 @@ class SubmitContract(RequestHandler):
 
 
     
-=======
-        files = path.join("testfiles", "case{}")
-
->>>>>>> ae2980cbebc3dd22fcd5f56306ab97d8fc564dd6
     def post(self):
         # get the contract
         submission = json.loads(self.request.body)
