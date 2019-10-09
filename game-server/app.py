@@ -78,6 +78,7 @@ class Hint(RequestHandler):
         if not id: raise HTTPError(404, "Need a team ID")
         if not case: raise HTTPError(404, "Need a case submission")
 
+        # retrieve the hint file
         try:
             for file in listdir(path.join("testfiles")):
                 if fnmatch.fnmatch(file, '{}*'.format(case)):
@@ -89,6 +90,12 @@ class Hint(RequestHandler):
                     break
         except FileNotFoundError:
             raise HTTPError(500, "Requested test case not found")
+
+        # update the hint for the user
+        team = db.query(Teams).filter_by(id=id).first()
+        setattr(team, "hint{}".format(case), True)
+        db.commit()
+
     
 class Submit(RequestHandler):
     def post(self):
@@ -111,7 +118,6 @@ class Submit(RequestHandler):
 
 # parse results and update score of the team
 def update_score(team, results):
-    # TODO: check if already submitted same code
     team.submissions += 1
     # loop through the results
     total_score = 0
@@ -119,10 +125,13 @@ def update_score(team, results):
         # if result is true update score
         # else leave score as is
         if result:
+            # did team request hint?
+            hint = getattr(team, "hint{}".format(case))
+            score = SCORES[case]/2 if hint else SCORES[case]
             # SCORES is imported from "scores.py"
-            total_score += SCORES[case]
+            total_score += score
             # update the score for the case
-            setattr(team, "test{}".format(case), SCORES[case])
+            setattr(team, "test{}".format(case), score)
     team.score = total_score
     db.commit()
 
