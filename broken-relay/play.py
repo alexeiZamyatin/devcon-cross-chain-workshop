@@ -201,8 +201,18 @@ def score():
     # get your current score and rank
     request = requests.get(URL)
     response = request.json()
+    team = response["team"]
 
-    print("Your score is {}.".format(response["score"]))
+    print("Your total score is {}.".format(team["score"]))
+    print("Detailed score breakdown:")
+    for key, value in TESTS.items():
+        test = "test{}".format(key)
+        hint = "hint{}".format(key)
+        score = team[test]
+        if team[hint]:
+            print("Testcase {:2}: {:2} (hint requested)".format(key, score))
+        else:
+            print("Testcase {:2}: {:2}".format(key, score))
 
 def test():
     try:
