@@ -36,6 +36,7 @@ class Leaderboard(RequestHandler):
         #]
         self.write({'teams': message})
 
+# TODO: add UUID
 class Register(RequestHandler):
     def post(self):
         # get a team name
@@ -67,7 +68,6 @@ class Score(RequestHandler):
         if not team: raise HTTPError(404)
         self.write({'id': team.id, 'team': team.as_dict()})
 
-# TODO: reduce score when requesting a hint
 class Hint(RequestHandler):
     def get(self):
         # team id
@@ -135,8 +135,6 @@ def update_score(team, results):
             setattr(team, "test{}".format(case), score)
     team.score = total_score
     db.commit()
-
-
 
 # not used at the moment
 def execute_test(test):
