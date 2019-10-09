@@ -222,15 +222,15 @@ contract('Attack Test Cases', async(accounts) => {
 
 
     // FORK HANDLING 
-    xit("TESTCASE 10: fork submission handling", async () => {   
-        assert(false);
-        // TODO
-    });
+    // xit("TESTCASE 10: fork submission handling", async () => {   
+    //     assert(false);
+    //     // TODO
+    // });
 
-    xit("TESTCASE 11: main chain deleted too early - save costs!", async () => {   
-        assert(false);
-        // TODO
-    });
+    // xit("TESTCASE 11: main chain deleted too early - save costs!", async () => {   
+    //     assert(false);
+    //     // TODO
+    // });
     
 
 });
