@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -22,6 +22,17 @@ class Teams(Base):
     test8 = Column(Integer, default=0)
     test9 = Column(Integer, default=0)
     test10 = Column(Integer, default=0)            
+    hint1 = Column(Boolean, default=True)
+    hint2 = Column(Boolean, default=True)
+    hint3a = Column(Boolean, default=True)
+    hint3b = Column(Boolean, default=True)
+    hint4 = Column(Boolean, default=True)
+    hint5 = Column(Boolean, default=True)
+    hint6 = Column(Boolean, default=True)
+    hint7 = Column(Boolean, default=True)
+    hint8 = Column(Boolean, default=True)
+    hint9 = Column(Boolean, default=True)
+    hint10 = Column(Boolean, default=True)            
 
     def __repr__(self):
         return "<User(id='{}', name='{}', score='{}')>".format(
