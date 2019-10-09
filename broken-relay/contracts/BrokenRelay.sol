@@ -79,7 +79,7 @@ contract BrokenRelay {
         )
         public
         {
-        // TESTCASE: Check that function is only called once
+        // TESTCASE 1: Check that function is only called once
         require(_heaviestBlock == 0, ERR_GENESIS_SET);
 
         bytes32 blockHeaderHash = blockHashFromHeader(blockHeaderBytes);
@@ -98,23 +98,23 @@ contract BrokenRelay {
     */
     function submitBlockHeader(bytes memory blockHeaderBytes) public returns (bytes32) {
         
-        // TESTCASE: check that submitted block header has correct size
+        // TESTCASE 3a, 3b: check that submitted block header has correct size
         require(blockHeaderBytes.length == 80, ERR_INVALID_HEADER);
 
         // Extract prev and cacl. current block header hashes
         bytes32 hashPrevBlock = getPrevBlockHashFromHeader(blockHeaderBytes);
         bytes32 hashCurrentBlock = blockHashFromHeader(blockHeaderBytes);
 
-        // TESTCASE: check that the block header does not yet exists in storage, i.e., that is not a duplicate submission
+        // TESTCASE 2: check that the block header does not yet exists in storage, i.e., that is not a duplicate submission
         // Note: merkleRoot is always set
         require(_headers[hashCurrentBlock].merkleRoot == 0, ERR_DUPLICATE_BLOCK);
     
-        // TESTCASE:check that referenced previous block exists in storage
+        // TESTCASE 4:check that referenced previous block exists in storage
         require(_headers[hashPrevBlock].merkleRoot != 0, ERR_PREV_BLOCK);
 
         uint256 target = getTargetFromHeader(blockHeaderBytes);
 
-        // TESTCASE: Check the PoW solution matches the target specified in the block header
+        // TESTCASE 5: Check the PoW solution matches the target specified in the block header
         require(hashCurrentBlock <= bytes32(target), ERR_LOW_DIFF);
 
         // NOTE: for simplicity, we do not check retargetting here.
@@ -158,19 +158,19 @@ contract BrokenRelay {
         uint256 confirmations)
         public returns(bool)
         {
-        // TESTCASE: Check that txid is not 0
+        // TESTCASE 6: Check that txid is not 0
         require(txid != 0 , ERR_INVALID_TXID);
 
-        // TESTCASE: Check merkle proof structure, 1st hash == txid
+        // TESTCASE 7: Check merkle proof structure, 1st hash == txid
         require(merkleProof[0].flip32Bytes() == txid, ERR_INVALID_TXID);
         
-        // TESTCASE 9: check if tx hash requested confirmations.
+        // TESTCASE 8: check if tx hash requested confirmations.
         require(_headers[_heaviestBlock].blockHeight - txBlockHeight >= confirmations, ERR_CONFIRMS);
 
         bytes32 blockHeaderHash = _mainChain[txBlockHeight];
         bytes32 merkleRoot = _headers[blockHeaderHash].merkleRoot;
         
-        // TESTCASE 10: save costs if only 1 TX in block
+        // TESTCASE 9: save costs if only 1 TX in block
         if(merkleProof.length == 1){
             require(merkleProof[0] == merkleRoot,ERR_VERIFY_TX);
             emit VerityTransaction(txid, txBlockHeight);
