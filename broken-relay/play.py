@@ -91,7 +91,7 @@ def hint():
     # ask which case is solved now
     next_test = user_input("Please enter the number of the attack you want to have a hint for: ")
 
-    URL = BASE + "?id={}&case={}".format(config["id"], next_test)
+    URL = BASE + "/api/hint?id={}&case={}".format(config["id"], next_test)
 
     open_problems = []
     for key, value in config["tests"].items():
@@ -111,13 +111,18 @@ def hint():
     try:
         # submit team_id
         request = requests.get(URL)
+        # print(request.status_code)
+        # print(request._content)
         response = request.json()
 
+    except:
+        print("Problem with getting the test case from the server")
+
+    try:
         with open(os.path.join("test", response["name"]), "w+") as test_file:
             test_file.write(response["content"])
     except:
-        print("Problem with getting the test case from the server")
-        return
+        print("Hint already fetched from the server")
  
 
 def submit():
