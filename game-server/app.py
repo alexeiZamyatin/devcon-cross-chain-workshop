@@ -15,7 +15,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # setup database
-engine = create_engine('sqlite:///teams.db', echo=True)
+engine = create_engine('sqlite:///teams.db')
 Session = sessionmaker(bind=engine)
 metadata.create_all(engine, checkfirst=True)
 db = Session()
@@ -77,6 +77,11 @@ class Hint(RequestHandler):
 
         if not id: raise HTTPError(404, "Need a team ID")
         if not case: raise HTTPError(404, "Need a case submission")
+        
+        # update the hint for the user
+        team = db.query(Teams).filter_by(id=id).first()
+        setattr(team, "hint{}".format(case), True)
+        db.commit()
 
         # retrieve the hint file
         try:
@@ -91,10 +96,6 @@ class Hint(RequestHandler):
         except FileNotFoundError:
             raise HTTPError(500, "Requested test case not found")
 
-        # update the hint for the user
-        team = db.query(Teams).filter_by(id=id).first()
-        setattr(team, "hint{}".format(case), True)
-        db.commit()
 
     
 class Submit(RequestHandler):
