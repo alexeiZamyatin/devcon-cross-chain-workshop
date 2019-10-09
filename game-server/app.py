@@ -65,7 +65,7 @@ class Score(RequestHandler):
         id = self.get_argument('id', None)
         team = db.query(Teams).filter_by(id=id).first()
         if not team: raise HTTPError(404)
-        self.write({'id': team.id, 'score': team.score})
+        self.write({'id': team.id, 'team': team.as_dict()})
 
 # TODO: reduce score when requesting a hint
 class Hint(RequestHandler):
