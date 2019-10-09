@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#coding: utf8
 from __future__ import print_function  # Only Python 2.x
 
 import json
@@ -53,16 +55,20 @@ def init():
     print_file("banner.txt")
     print_file("intro.txt")
 
+def user_input(message):
+    if sys.version_info[0] < 3:
+        my_input = raw_input(message) 
+    else:
+        my_input = input(message)
+
+    return my_input
+
 def register():
     URL = BASE + "/api/register"
     name = None
 
     while not name:
-        if sys.version_info[0] < 3:
-            name = raw_input("Please enter your team name: ") 
-        else:
-            name = input("Please enter your team name: ")
-
+        name = user_input("Please enter your team name: ")
     data = json.dumps({"name": name})
 
     try:
@@ -82,10 +88,17 @@ def register():
 def hint():
     # return which cases are not yet solved
     print("")
-    print("You are under attack! Problems {} are not yet solved!".format([key if value else None for key, value in config["tests"].items()]))
+    # ask which case is solved now
+    next_test = user_input("Please enter the number of the attack you want to have a hint for: ")
 
-    # as which case is solved now
-    next_test = input("Please enter the number of the attack you want to have a hint for: ")
+    URL = BASE + "?id={}&case={}".format(config["id"], next_test)
+
+    open_problems = []
+    for key, value in config["tests"].items():
+        if not value:
+            open_problems.append(key)
+
+    print("You are under attack! Problems {} are not yet solved!".format(open_problems))
 
     if not next_test in config["tests"]:
         print("Please enter a valid number!")
@@ -97,9 +110,7 @@ def hint():
     # get the testcase from the server
     try:
         # submit team_id
-        url = URL + "?id={}&case={}".format(config["id"], next_test)
-
-        request = requests.get(url)
+        request = requests.get(URL)
         response = request.json()
 
         with open(os.path.join("test", response["name"]), "w+") as test_file:
@@ -136,7 +147,7 @@ def submit():
                 else:
                     results[testcase] = False
                     print("Sorry, testcase {} failed. TIP: you can request a hint and see the testcase in the 'test' folder.".format(testcase))
-
+        print("===== Congratulations! You have completed the game!")
     except CalledProcessError:
         print("===== Oh no, you are still vulnerable! ====")
     
@@ -168,7 +179,7 @@ def leaders():
 
     leaderboard = []
 
-    print(response)
+    # print(response)
 
     for team in response['teams']:
         leaderboard.append((team["name"], team["score"]))
@@ -176,8 +187,7 @@ def leaders():
     for i in range(len(leaderboard)):
         name = leaderboard[i][0]
         score = leaderboard[i][1]
-        # TODO: make this output format nice
-        print("{}: {}    {}".format(i+1, name, score))
+        print("{:2}: {:30} {:3}".format(i+1, name, score))
 
     # print(json.dumps(response))
 
@@ -197,7 +207,15 @@ def test():
         print("===== Tests failed ====")
 
 def display_help():
-    print("")
+    print("You have the following options:\n"
+        "hint:    Asks you to submit a testcase number and gives you the testcase.\n"
+        "         Requesting a hint will reduce the score you can get for that testcase by 50%.\n"
+        "test:    Locally executes 'truffle test' to give you feedback on your contract.\n"
+        "submit:  Evaluates your contract and you will get a score.\n"
+        "score:   See your current score for each testcase.\n"
+        "leaders: Displays the leaderboard.\n"
+        "help:    Displays this help.\n"
+        "quit:    End the game.\n")
 
 def stop():
     print("Thanks for playing!")
@@ -211,7 +229,7 @@ if __name__ == "__main__":
     register()
     command = None
     while not command:
-        command = input("What would you like to do next?\n(hint/test/submit/score/leaders/help/quit): ")
+        command = user_input("What would you like to do next?\n(hint/test/submit/score/leaders/help/quit): ")
 
         if command == "help":
             display_help()
@@ -228,5 +246,6 @@ if __name__ == "__main__":
         elif command == "leaders":
             leaders()
         else:
+            print(command)
             print("Command not understood. Type 'help' for help and 'quit' to exit.")
         command= None
