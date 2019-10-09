@@ -36,7 +36,7 @@ class Leaderboard(RequestHandler):
         #]
         self.write({'teams': message})
 
-class RegisterTeam(RequestHandler):
+class Register(RequestHandler):
     def post(self):
         # get a team name
         submission = json.loads(self.request.body)
@@ -67,10 +67,8 @@ class Score(RequestHandler):
         if not team: raise HTTPError(404)
         self.write({'id': team.id, 'score': team.score})
 
-# TODO: implement hint function
-
-
-class SubmitContract(RequestHandler):
+# TODO: reduce score when requesting a hint
+class Hint(RequestHandler):
     def get(self):
         # team id
         id = self.get_argument('id', None)
@@ -91,10 +89,8 @@ class SubmitContract(RequestHandler):
                     break
         except FileNotFoundError:
             raise HTTPError(500, "Requested test case not found")
-
-
-
     
+class Submit(RequestHandler):
     def post(self):
         # get the contract
         submission = json.loads(self.request.body)
@@ -147,8 +143,9 @@ def execute_test(test):
 def make_app():
   urls = [
       ("/api/leaderboard", Leaderboard),
-      ("/api/register", RegisterTeam),
-      ("/api/submit", SubmitContract),
+      ("/api/hint", Hint),
+      ("/api/register", Register),
+      ("/api/submit", Submit),
       ("/api/score", Score),
       ("/", Home)
       ]
