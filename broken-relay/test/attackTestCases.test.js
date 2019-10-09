@@ -222,12 +222,12 @@ contract('Attack Test Cases', async(accounts) => {
 
 
     // FORK HANDLING 
-    it("TESTCASE 10: fork submission handling", async () => {   
+    xit("TESTCASE 10: fork submission handling", async () => {   
         assert(false);
         // TODO
     });
 
-    it("TESTCASE 11: main chain deleted too early - save costs!", async () => {   
+    xit("TESTCASE 11: main chain deleted too early - save costs!", async () => {   
         assert(false);
         // TODO
     });
