@@ -1,6 +1,24 @@
 # Relay Attack
 
-## Instructions
+## Install
+
+Execute the install shell script with:
+
+```
+./install
+```
+
+## Play
+
+Start the game with:
+
+```
+./play
+```
+
+## Manually install requirements
+
+In case the install script odes not work on your computer, you can run the installations manually.
 
 Install `ganache-cli` and `truffle` globally using:
 
@@ -25,6 +43,8 @@ Open a new terminal and start a local ganache-cli server to test your solutions:
 ```
 ganache-cli
 ```
+
+## Alternative start
 
 Start the game in a different terminal window with:
 
