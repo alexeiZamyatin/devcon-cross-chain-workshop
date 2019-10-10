@@ -1,4 +1,5 @@
 import json
+import uuid
 import subprocess
 from shutil import copy
 from os import path, listdir
@@ -51,7 +52,8 @@ class Register(RequestHandler):
             response['message'] = 'Team exists with ID {}'.format(team.id)
         else:
             # return new team id
-            team = Teams(name=submission['name'])
+            team_id = str(uuid.uuid4())
+            team = Teams(id=team_id, name=submission['name'])
             db.add(team)
             db.commit()
             response['message'] = 'Successfully added team {} with ID {}'.format(team.name, team.id)

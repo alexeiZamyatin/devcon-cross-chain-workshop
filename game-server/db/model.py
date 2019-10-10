@@ -7,7 +7,7 @@ metadata = Base.metadata
 class Teams(Base):
     __tablename__ = 'teams'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True)
     name = Column(String)
     score = Column(Integer, default=0)
     submissions = Column(Integer, default=0)
