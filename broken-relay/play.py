@@ -232,10 +232,14 @@ def score():
 
 def test():
     try:
-        for output in execute(["truffle", "test"]):
+        print("===== Running unit tests ======")
+        for output in execute(["truffle", "test", "./test/storeHeader.test.js"]):
+            print(output, end="")
+        print("===== Running attack tests ======")
+        for output in execute(["truffle", "test", "./test/attackTestCases.test.min.js"]):
             print(output, end="")
     except CalledProcessError:
-        print("===== Tests failed ====")
+        print("===== Tests failed =====")
 
 
 def display_help():
