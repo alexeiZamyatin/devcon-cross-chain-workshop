@@ -146,7 +146,7 @@ def submit():
     try:
         # perform tests locally
         # parses the output line by line
-        for output in execute(["truffle", "test"]):
+        for output in execute(["truffle", "test", "./test/attackTestCases.test.min.js"]):
             # check if it includes the testcases
             if "TESTCASE" in output:
                 # split the output string into a list
